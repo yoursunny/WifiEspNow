@@ -1,4 +1,8 @@
+#if defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
 #include <WifiEspNow.h>
 
 static uint8_t PEER[] {0x5E, 0xCF, 0x7F, 0x90, 0xFA, 0xE8};
@@ -19,8 +23,8 @@ void setup() {
   Serial.println(WiFi.softAPmacAddress());
 
   WiFi.persistent(false);
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.softAP("ESPNOW", "ESPNOW", 4);
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("ESPNOW", "ESPNOW", 3);
   WiFi.softAPdisconnect(false);
 
   bool ok = WifiEspNow.begin();

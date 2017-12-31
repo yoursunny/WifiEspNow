@@ -1,3 +1,4 @@
+#ifdef ESP8266
 #include "WifiEspNowBroadcast.h"
 
 #include <ESP8266WiFi.h>
@@ -24,7 +25,7 @@ WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
   WiFi.softAP(ssid, nullptr, channel);
   WiFi.disconnect();
 
-  WifiEspNow.begin(WifiEspNowRole::COMBO);
+  WifiEspNow.begin();
 }
 
 void
@@ -106,6 +107,7 @@ WifiEspNowBroadcastClass::processScan(void* result, int status)
   }
 
   if (newPeer != nullptr) {
-    WifiEspNow.addPeer(newPeer, WifiEspNowRole::SLAVE, newPeerChannel);
+    WifiEspNow.addPeer(newPeer, newPeerChannel);
   }
 }
+#endif

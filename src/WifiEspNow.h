@@ -12,15 +12,6 @@ static const int WIFIESPNOW_KEYLEN = 16;
  */
 static const int WIFIESPNOW_MAXMSGLEN = 250;
 
-/** \brief ESP-NOW role.
- */
-enum class WifiEspNowRole : uint8_t {
-  IDLE       = 0,
-  CONTROLLER = 1,
-  SLAVE      = 2,
-  COMBO      = 3,
-};
-
 /** \brief Result of send operation.
  */
 enum class WifiEspNowSendStatus : uint8_t {
@@ -35,11 +26,10 @@ public:
   WifiEspNowClass();
 
   /** \brief Initialize ESP-NOW.
-   *  \param role ESP-NOW role of this node.
    *  \return whether success
    */
   bool
-  begin(WifiEspNowRole role = WifiEspNowRole::COMBO);
+  begin();
 
   /** \brief Stop ESP-NOW.
    */
@@ -48,14 +38,12 @@ public:
 
   /** \brief Add a peer.
    *  \param mac peer MAC address
-   *  \param role peer role
    *  \param channel peer channel, 0 for current channel
    *  \param key encryption key, nullptr to disable encryption
    *  \return whether success
    */
   bool
-  addPeer(const uint8_t mac[6], WifiEspNowRole role = WifiEspNowRole::SLAVE,
-          int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr);
+  addPeer(const uint8_t mac[6], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr);
 
   /** \brief Remove a peer.
    *  \param mac peer MAC address
@@ -94,10 +82,10 @@ public:
 
 private:
   static void
-  rx(uint8_t* mac, uint8_t* data, uint8_t len);
+  rx(const uint8_t* mac, const uint8_t* data, uint8_t len);
 
   static void
-  tx(uint8_t* mac, uint8_t status);
+  tx(const uint8_t* mac, uint8_t status);
 
 private:
   RxCallback m_rxCb;

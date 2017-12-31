@@ -1,1 +1,1 @@
-# ESP-NOW Arduino library for ESP8266
+# ESP-NOW Arduino library for ESP8266 and ESP32
