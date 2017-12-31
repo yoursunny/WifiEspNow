@@ -1,8 +1,14 @@
-#ifdef ESP8266
 #include "WifiEspNowBroadcast.h"
 
+#if defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <user_interface.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <esp_wifi.h>
+#else
+#error "This library supports ESP8266 and ESP32 only."
+#endif
 
 WifiEspNowBroadcastClass WifiEspNowBroadcast;
 
@@ -27,9 +33,14 @@ WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
 void
 WifiEspNowBroadcastClass::loop()
 {
-  if (millis() >= m_nextScan && !m_isScanning) {
+  if (millis() >= m_nextScan && !m_isScanning && WiFi.scanComplete() != WIFI_SCAN_RUNNING) {
     this->scan();
   }
+#ifdef ESP32
+  if (m_isScanning && WiFi.scanComplete() >= 0) {
+    this->processScan();
+  }
+#endif
 }
 
 void
@@ -50,33 +61,98 @@ void
 WifiEspNowBroadcastClass::scan()
 {
   m_isScanning = true;
-  scan_config sc { .ssid = reinterpret_cast<uint8*>(m_ssid.begin()) };
+#if defined(ESP8266)
+  scan_config sc;
+#elif defined(ESP32)
+  wifi_scan_config_t sc;
+#endif
+  memset(&sc, 0, sizeof(sc));
+  sc.ssid = reinterpret_cast<uint8_t*>(const_cast<char*>(m_ssid.c_str()));
+#if defined(ESP8266)
   wifi_station_scan(&sc, reinterpret_cast<scan_done_cb_t>(WifiEspNowBroadcastClass::processScan));
+#elif defined(ESP32)
+  esp_wifi_scan_start(&sc, false);
+#endif
 }
 
+#if defined(ESP8266)
 void
 WifiEspNowBroadcastClass::processScan(void* result, int status)
 {
-  WifiEspNowBroadcast.m_isScanning = false;
-  WifiEspNowBroadcast.m_nextScan = millis() + WifiEspNowBroadcast.m_scanFreq;
+  WifiEspNowBroadcast.processScan2(result, status);
+}
+
+void
+WifiEspNowBroadcastClass::processScan2(void* result, int status)
+
+#define FOREACH_AP(f) \
+  do { \
+    for (bss_info* it = reinterpret_cast<bss_info*>(result); it; it = STAILQ_NEXT(it, next)) { \
+      (f)(it->bssid, it->channel); \
+    } \
+  } while (false)
+
+#define DELETE_APS \
+  do {} while(false)
+
+#elif defined(ESP32)
+void
+WifiEspNowBroadcastClass::processScan()
+
+// ESP32 WiFiScanClass::_scanDone is always invoked after a scan complete event, so we can use
+// Arduino's copy of AP records, but we must check SSID, and should not always delete AP records.
+
+#define FOREACH_AP(f) \
+  do { \
+    int nNetworks = WiFi.scanComplete(); \
+    for (uint8_t i = 0; static_cast<int>(i) < nNetworks; ++i) { \
+      if (WiFi.SSID(i) != m_ssid) { \
+        continue; \
+      } \
+      (f)(WiFi.BSSID(i), static_cast<uint8_t>(WiFi.channel(i))); \
+    } \
+  } while (false)
+
+#define DELETE_APS \
+  do { \
+    bool hasOtherSsid = false; \
+    int nNetworks = WiFi.scanComplete(); \
+    for (uint8_t i = 0; static_cast<int>(i) < nNetworks; ++i) { \
+      if (WiFi.SSID(i) == m_ssid) { \
+        continue; \
+      } \
+      hasOtherSsid = true; \
+      break; \
+    } \
+    if (!hasOtherSsid) { \
+      WiFi.scanDelete(); \
+    } \
+  } while(false)
+
+#endif
+{
+  m_isScanning = false;
+  m_nextScan = millis() + m_scanFreq;
+#ifdef ESP8266
   if (status != 0) {
     return;
   }
+#endif
 
   const int MAX_PEERS = 20;
   WifiEspNowPeerInfo oldPeers[MAX_PEERS];
   int nOldPeers = std::min(WifiEspNow.listPeers(oldPeers, MAX_PEERS), MAX_PEERS);
   const uint8_t PEER_FOUND = 0xFF; // assigned to .channel to indicate peer is matched
 
-  for (bss_info* it = reinterpret_cast<bss_info*>(result); it; it = STAILQ_NEXT(it, next)) {
+  FOREACH_AP([&] (const uint8_t* bssid, uint8_t channel) {
     for (int i = 0; i < nOldPeers; ++i) {
-      if (memcmp(it->bssid, oldPeers[i].mac, 6) != 0) {
+      if (memcmp(bssid, oldPeers[i].mac, 6) != 0) {
         continue;
       }
       oldPeers[i].channel = PEER_FOUND;
       break;
     }
-  }
+  });
 
   for (int i = 0; i < nOldPeers; ++i) {
     if (oldPeers[i].channel != PEER_FOUND) {
@@ -84,8 +160,9 @@ WifiEspNowBroadcastClass::processScan(void* result, int status)
     }
   }
 
-  for (bss_info* it = reinterpret_cast<bss_info*>(result); it; it = STAILQ_NEXT(it, next)) {
-    WifiEspNow.addPeer(it->bssid, it->channel);
-  }
+  FOREACH_AP([&] (const uint8_t* bssid, uint8_t channel) {
+    WifiEspNow.addPeer(bssid, channel);
+  });
+
+  DELETE_APS;
 }
-#endif

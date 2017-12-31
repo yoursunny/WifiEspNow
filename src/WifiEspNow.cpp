@@ -44,15 +44,21 @@ WifiEspNowClass::listPeers(WifiEspNowPeerInfo* peers, int maxPeers) const
   for (u8* mac = esp_now_fetch_peer(true);
        mac != nullptr;
        mac = esp_now_fetch_peer(false)) {
+    uint8_t channel = static_cast<uint8_t>(esp_now_get_peer_channel(mac));
+#elif defined(ESP32)
+  esp_now_peer_info_t peer;
+  for (esp_err_t e = esp_now_fetch_peer(true, &peer);
+       e == ESP_OK;
+       e = esp_now_fetch_peer(false, &peer)) {
+    uint8_t* mac = peer.peer_addr;
+    uint8_t channel = peer.channel;
+#endif
     if (n < maxPeers) {
       memcpy(peers[n].mac, mac, 6);
-      peers[n].channel = static_cast<uint8_t>(esp_now_get_peer_channel(mac));
+      peers[n].channel = channel;
     }
     ++n;
   }
-#elif defined(ESP32)
-  // not implemented
-#endif
   return n;
 }
 
@@ -67,17 +73,30 @@ WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WI
 {
 #if defined(ESP8266)
   if (this->hasPeer(mac)) {
+    if (esp_now_get_peer_channel(const_cast<u8*>(mac)) == channel) {
+      return true;
+    }
     this->removePeer(mac);
   }
   return esp_now_add_peer(const_cast<u8*>(mac), ESP_NOW_ROLE_SLAVE, static_cast<u8>(channel),
                           const_cast<u8*>(key), key == nullptr ? 0 : WIFIESPNOW_KEYLEN) == 0;
 #elif defined(ESP32)
   esp_now_peer_info_t pi;
+  if (esp_now_get_peer(mac, &pi) == ESP_OK) {
+    if (pi.channel == static_cast<uint8_t>(channel)) {
+      return true;
+    }
+    this->removePeer(mac);
+  }
   memset(&pi, 0, sizeof(pi));
   memcpy(pi.peer_addr, mac, ESP_NOW_ETH_ALEN);
   pi.channel = static_cast<uint8_t>(channel);
   pi.ifidx = ESP_IF_WIFI_AP;
-  return (this->hasPeer(mac) ? esp_now_mod_peer(&pi) : esp_now_add_peer(&pi)) == 0;
+  if (key != nullptr) {
+    memcpy(pi.lmk, key, ESP_NOW_KEY_LEN);
+    pi.encrypt = true;
+  }
+  return esp_now_add_peer(&pi) == ESP_OK;
 #endif
 }
 

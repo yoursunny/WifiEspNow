@@ -58,8 +58,16 @@ private:
   void
   scan();
 
+#if defined(ESP8266)
   static void
   processScan(void* result, int status);
+
+  void
+  processScan2(void* result, int status);
+#elif defined(ESP32)
+  void
+  processScan();
+#endif
 
 private:
   String m_ssid;

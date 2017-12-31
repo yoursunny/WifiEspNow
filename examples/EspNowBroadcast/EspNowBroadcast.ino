@@ -1,5 +1,9 @@
-#include <ESP8266WiFi.h>
 #include <WifiEspNowBroadcast.h>
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
 
 static const int BUTTON_PIN = 0; // "flash" button on NodeMCU, Witty Cloud, etc
 static const int LED_PIN = 2;    // ESP-12F blue LED
