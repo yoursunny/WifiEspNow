@@ -1,10 +1,11 @@
 #include "WifiEspNow.h"
 
+#include <string.h>
+
 #if defined(ESP8266)
 #include <c_types.h>
 #include <espnow.h>
 #elif defined(ESP32)
-#include <string.h>
 #include <esp_now.h>
 #else
 #error "This library supports ESP8266 and ESP32 only."
@@ -35,10 +36,39 @@ WifiEspNowClass::end()
   esp_now_deinit();
 }
 
+int
+WifiEspNowClass::listPeers(WifiEspNowPeerInfo* peers, int maxPeers) const
+{
+  int n = 0;
+#if defined(ESP8266)
+  for (u8* mac = esp_now_fetch_peer(true);
+       mac != nullptr;
+       mac = esp_now_fetch_peer(false)) {
+    if (n < maxPeers) {
+      memcpy(peers[n].mac, mac, 6);
+      peers[n].channel = static_cast<uint8_t>(esp_now_get_peer_channel(mac));
+    }
+    ++n;
+  }
+#elif defined(ESP32)
+  // not implemented
+#endif
+  return n;
+}
+
+bool
+WifiEspNowClass::hasPeer(const uint8_t mac[6]) const
+{
+  return esp_now_is_peer_exist(const_cast<uint8_t*>(mac));
+}
+
 bool
 WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WIFIESPNOW_KEYLEN])
 {
 #if defined(ESP8266)
+  if (this->hasPeer(mac)) {
+    this->removePeer(mac);
+  }
   return esp_now_add_peer(const_cast<u8*>(mac), ESP_NOW_ROLE_SLAVE, static_cast<u8>(channel),
                           const_cast<u8*>(key), key == nullptr ? 0 : WIFIESPNOW_KEYLEN) == 0;
 #elif defined(ESP32)
@@ -46,8 +76,8 @@ WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WI
   memset(&pi, 0, sizeof(pi));
   memcpy(pi.peer_addr, mac, ESP_NOW_ETH_ALEN);
   pi.channel = static_cast<uint8_t>(channel);
-  pi.ifidx = ESP_IF_WIFI_AP;  
-  return esp_now_add_peer(&pi) == 0;
+  pi.ifidx = ESP_IF_WIFI_AP;
+  return (this->hasPeer(mac) ? esp_now_mod_peer(&pi) : esp_now_add_peer(&pi)) == 0;
 #endif
 }
 

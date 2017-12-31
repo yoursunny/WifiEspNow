@@ -12,6 +12,11 @@ static const int WIFIESPNOW_KEYLEN = 16;
  */
 static const int WIFIESPNOW_MAXMSGLEN = 250;
 
+struct WifiEspNowPeerInfo {
+  uint8_t mac[6];
+  uint8_t channel;
+};
+
 /** \brief Result of send operation.
  */
 enum class WifiEspNowSendStatus : uint8_t {
@@ -36,7 +41,22 @@ public:
   void
   end();
 
-  /** \brief Add a peer.
+  /** \brief List current peers.
+   *  \param[out] peers buffer for peer information
+   *  \param maxPeers buffer size
+   *  \return total number of peers, \p std::min(retval,maxPeers) is written to \p peers
+   */
+  int
+  listPeers(WifiEspNowPeerInfo* peers, int maxPeers) const;
+
+  /** \brief Test whether peer exists.
+   *  \param mac peer MAC address
+   *  \return whether peer exists
+   */
+  bool
+  hasPeer(const uint8_t mac[6]) const;
+
+  /** \brief Add or modify a peer.
    *  \param mac peer MAC address
    *  \param channel peer channel, 0 for current channel
    *  \param key encryption key, nullptr to disable encryption

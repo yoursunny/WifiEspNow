@@ -2,9 +2,6 @@
 #include "WifiEspNowBroadcast.h"
 
 #include <ESP8266WiFi.h>
-
-#include <c_types.h>
-#include <espnow.h>
 #include <user_interface.h>
 
 WifiEspNowBroadcastClass WifiEspNowBroadcast;
@@ -23,7 +20,6 @@ WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
 
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(ssid, nullptr, channel);
-  WiFi.disconnect();
 
   WifiEspNow.begin();
 }
@@ -68,46 +64,28 @@ WifiEspNowBroadcastClass::processScan(void* result, int status)
   }
 
   const int MAX_PEERS = 20;
-  uint8_t oldPeers[6][MAX_PEERS];
-  int nOldPeers = 0;
-  for (u8* peer = esp_now_fetch_peer(true);
-       peer != nullptr && nOldPeers < MAX_PEERS;
-       peer = esp_now_fetch_peer(false)) {
-    memcpy(oldPeers[nOldPeers++], peer, 6);
-  }
+  WifiEspNowPeerInfo oldPeers[MAX_PEERS];
+  int nOldPeers = std::min(WifiEspNow.listPeers(oldPeers, MAX_PEERS), MAX_PEERS);
+  const uint8_t PEER_FOUND = 0xFF; // assigned to .channel to indicate peer is matched
 
-  uint8_t* newPeer = nullptr; // every scan adds at most one new peer
-  int newPeerChannel;
   for (bss_info* it = reinterpret_cast<bss_info*>(result); it; it = STAILQ_NEXT(it, next)) {
-    if (it->ssid_len != WifiEspNowBroadcast.m_ssid.length() ||
-        memcmp(it->ssid, WifiEspNowBroadcast.m_ssid.c_str(), it->ssid_len) != 0) {
-      continue;
-    }
-
-    bool isOldPeer = false;
     for (int i = 0; i < nOldPeers; ++i) {
-      if (memcmp(it->bssid, oldPeers[i], 6) == 0) {
-        isOldPeer = true;
-        memset(oldPeers[i], 0, 6);
-        break;
+      if (memcmp(it->bssid, oldPeers[i].mac, 6) != 0) {
+        continue;
       }
-    }
-
-    if (!isOldPeer) {
-      newPeer = it->bssid;
-      newPeerChannel = it->channel;
+      oldPeers[i].channel = PEER_FOUND;
+      break;
     }
   }
 
   for (int i = 0; i < nOldPeers; ++i) {
-    uint8_t* peer = oldPeers[i];
-    if ((peer[0] | peer[1] | peer[2] | peer[3] | peer[4] | peer[5]) != 0) {
-      WifiEspNow.removePeer(peer);
+    if (oldPeers[i].channel != PEER_FOUND) {
+      WifiEspNow.removePeer(oldPeers[i].mac);
     }
   }
 
-  if (newPeer != nullptr) {
-    WifiEspNow.addPeer(newPeer, newPeerChannel);
+  for (bss_info* it = reinterpret_cast<bss_info*>(result); it; it = STAILQ_NEXT(it, next)) {
+    WifiEspNow.addPeer(it->bssid, it->channel);
   }
 }
 #endif
