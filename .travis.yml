@@ -2,21 +2,30 @@ sudo: false
 language: bash
 os:
   - linux
+env:
+  matrix:
+    - HARDWARE=esp8266com/esp8266 \
+      CORE=https://github.com/esp8266/Arduino/archive/a2d16f38d48727bba41befadebc590bdd84588ad.tar.gz \
+      BOARD=esp8266com:esp8266:generic
+    - HARDWARE=espressif/esp32 \
+      CORE=https://github.com/espressif/arduino-esp32/archive/70d0d4648766cea047613062ed50a9ecfc9de31f.tar.gz \
+      BOARD=espressif:esp32:esp32
 
 install:
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16
-  - curl -L http://downloads.arduino.cc/arduino-1.6.13-linux64.tar.xz | tar xJ; mv arduino-1.6.13 $HOME/arduino_ide
+  - mkdir -p $HOME/arduino_ide; cd $HOME/arduino_ide
+  - curl -L http://downloads.arduino.cc/arduino-1.6.13-linux64.tar.xz | tar xJ --strip 1
   - export PATH="$HOME/arduino_ide:$PATH"
   - cd $HOME/arduino_ide/hardware
-  - mkdir esp8266com; cd esp8266com
-  - curl -L https://github.com/esp8266/Arduino/archive/a2d16f38d48727bba41befadebc590bdd84588ad.tar.gz | tar xz; mv Arduino-a2d16f38d48727bba41befadebc590bdd84588ad esp8266
-  - cd esp8266/tools; python get.py
+  - mkdir -p $HARDWARE; cd $HARDWARE
+  - curl -L $CORE | tar xz --strip 1
+  - cd tools; python get.py
 
 before_script:
   - mkdir -p $HOME/Arduino/libraries
   - cp -r $TRAVIS_BUILD_DIR $HOME/Arduino/libraries/WifiEspNow
   - export DISPLAY=:1.0
-  - arduino --board esp8266com:esp8266:generic --save-prefs
+  - arduino --board $BOARD --save-prefs
 
 script:
   - |
