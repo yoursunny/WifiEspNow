@@ -19,13 +19,13 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
 
-  Serial.print("MAC address of this node is ");
-  Serial.println(WiFi.softAPmacAddress());
-
   WiFi.persistent(false);
   WiFi.mode(WIFI_AP);
-  WiFi.softAP("ESPNOW", "ESPNOW", 3);
+  WiFi.softAP("ESPNOW", nullptr, 3);
   WiFi.softAPdisconnect(false);
+
+  Serial.print("MAC address of this node is ");
+  Serial.println(WiFi.softAPmacAddress());
 
   bool ok = WifiEspNow.begin();
   if (!ok) {
