@@ -27,7 +27,7 @@ WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(ssid, nullptr, channel);
 
-  WifiEspNow.begin();
+  return WifiEspNow.begin();
 }
 
 void
