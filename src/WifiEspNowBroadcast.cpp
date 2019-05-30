@@ -1,5 +1,3 @@
-#include "WifiEspNowBroadcast.h"
-
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <user_interface.h>
@@ -9,6 +7,7 @@
 #else
 #error "This library supports ESP8266 and ESP32 only."
 #endif
+#include "WifiEspNowBroadcast.h"
 
 WifiEspNowBroadcastClass WifiEspNowBroadcast;
 

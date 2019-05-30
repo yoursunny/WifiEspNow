@@ -1,3 +1,8 @@
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
 #include "WifiEspNow.h"
 
 #include <string.h>
@@ -69,7 +74,11 @@ WifiEspNowClass::hasPeer(const uint8_t mac[6]) const
 }
 
 bool
-WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WIFIESPNOW_KEYLEN])
+#if defined(ESP8266)
+  WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WIFIESPNOW_KEYLEN])
+#elif defined(ESP32)
+  WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WIFIESPNOW_KEYLEN], int interface)
+#endif
 {
 #if defined(ESP8266)
   if (this->hasPeer(mac)) {
@@ -91,7 +100,7 @@ WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WI
   memset(&pi, 0, sizeof(pi));
   memcpy(pi.peer_addr, mac, ESP_NOW_ETH_ALEN);
   pi.channel = static_cast<uint8_t>(channel);
-  pi.ifidx = ESP_IF_WIFI_AP;
+  pi.ifidx = (wifi_interface_t) interface;
   if (key != nullptr) {
     memcpy(pi.lmk, key, ESP_NOW_KEY_LEN);
     pi.encrypt = true;
