@@ -60,11 +60,17 @@ public:
    *  \param mac peer MAC address
    *  \param channel peer channel, 0 for current channel
    *  \param key encryption key, nullptr to disable encryption
+   *  \param netif (ESP32 only) WiFi interface
    *  \return whether success
    *  \note To change peer key, remove the peer and re-add.
    */
+#if defined(ESP8266)
   bool
   addPeer(const uint8_t mac[6], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr);
+#elif defined(ESP32)
+  bool
+  addPeer(const uint8_t mac[6], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr, int netif = ESP_IF_WIFI_AP);
+#endif
 
   /** \brief Remove a peer.
    *  \param mac peer MAC address
