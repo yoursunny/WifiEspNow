@@ -1,6 +1,12 @@
 #ifndef WIFIESPNOW_H
 #define WIFIESPNOW_H
 
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
+
 #include <cstddef>
 #include <cstdint>
 
