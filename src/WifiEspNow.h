@@ -26,7 +26,7 @@ struct WifiEspNowPeerInfo {
 /** \brief Result of send operation.
  */
 enum class WifiEspNowSendStatus : uint8_t {
-  NONE = 0, ///< result unknonw, send in progress
+  NONE = 0, ///< result unknown, send in progress
   OK   = 1, ///< sent successfully
   FAIL = 2, ///< sending failed
 };
