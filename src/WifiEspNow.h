@@ -69,11 +69,11 @@ public:
 
   /**
    * @brief Add a peer or change peer channel.
-   * @param mac peer MAC address
-   * @param channel peer channel, 0 for current channel
-   * @param key encryption key, nullptr to disable encryption
-   * @param netif (ESP32 only) WiFi interface
-   * @return whether success
+   * @param mac peer MAC address.
+   * @param channel peer channel, 0 for current channel.
+   * @param key encryption key, nullptr to disable encryption.
+   * @param netif (ESP32 only) WiFi interface.
+   * @return whether success.
    * @note To change peer key, remove the peer and re-add.
    */
 #if defined(ARDUINO_ARCH_ESP8266)
@@ -86,8 +86,8 @@ public:
 
   /**
    * @brief Remove a peer.
-   * @param mac peer MAC address
-   * @return whether success
+   * @param mac peer MAC address.
+   * @return whether success.
    */
   bool
   removePeer(const uint8_t mac[6]);
@@ -96,8 +96,8 @@ public:
 
   /**
    * @brief Set receive callback.
-   * @param cb the callback
-   * @param arg an arbitrary argument passed to the callback
+   * @param cb the callback.
+   * @param arg an arbitrary argument passed to the callback.
    * @note Only one callback is allowed; this replaces any previous callback.
    */
   void
@@ -131,9 +131,10 @@ private:
   tx(const uint8_t* mac, uint8_t status);
 
 private:
-  RxCallback m_rxCb;
-  void* m_rxArg;
+  RxCallback m_rxCb = nullptr;
+  void* m_rxArg = nullptr;
   WifiEspNowSendStatus m_txRes;
+  bool m_ready = false;
 };
 
 /** @brief ESP-NOW API. */
