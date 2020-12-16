@@ -2,10 +2,10 @@
 
 #include <string.h>
 
-#if defined(ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266)
 #include <c_types.h>
 #include <espnow.h>
-#elif defined(ESP32)
+#elif defined(ARDUINO_ARCH_ESP32)
 #include <esp_now.h>
 #else
 #error "This library supports ESP8266 and ESP32 only."
@@ -15,14 +15,14 @@ WifiEspNowClass WifiEspNow;
 
 WifiEspNowClass::WifiEspNowClass()
   : m_rxCb(nullptr)
-  , m_rxCbArg(nullptr)
+  , m_rxArg(nullptr)
 {}
 
 bool
 WifiEspNowClass::begin()
 {
   return esp_now_init() == 0 &&
-#ifdef ESP8266
+#ifdef ARDUINO_ARCH_ESP8266
          esp_now_set_self_role(ESP_NOW_ROLE_COMBO) == 0 &&
 #endif
          esp_now_register_recv_cb(reinterpret_cast<esp_now_recv_cb_t>(WifiEspNowClass::rx)) == 0 &&
@@ -39,10 +39,10 @@ int
 WifiEspNowClass::listPeers(WifiEspNowPeerInfo* peers, int maxPeers) const
 {
   int n = 0;
-#if defined(ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266)
   for (u8* mac = esp_now_fetch_peer(true); mac != nullptr; mac = esp_now_fetch_peer(false)) {
     uint8_t channel = static_cast<uint8_t>(esp_now_get_peer_channel(mac));
-#elif defined(ESP32)
+#elif defined(ARDUINO_ARCH_ESP32)
   esp_now_peer_info_t peer;
   for (esp_err_t e = esp_now_fetch_peer(true, &peer); e == ESP_OK;
        e = esp_now_fetch_peer(false, &peer)) {
@@ -64,7 +64,7 @@ WifiEspNowClass::hasPeer(const uint8_t mac[6]) const
   return esp_now_is_peer_exist(const_cast<uint8_t*>(mac));
 }
 
-#if defined(ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266)
 bool
 WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WIFIESPNOW_KEYLEN])
 {
@@ -77,7 +77,7 @@ WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WI
   return esp_now_add_peer(const_cast<u8*>(mac), ESP_NOW_ROLE_SLAVE, static_cast<u8>(channel),
                           const_cast<u8*>(key), key == nullptr ? 0 : WIFIESPNOW_KEYLEN) == 0;
 }
-#elif defined(ESP32)
+#elif defined(ARDUINO_ARCH_ESP32)
 bool
 WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WIFIESPNOW_KEYLEN],
                          int netif)
@@ -108,10 +108,10 @@ WifiEspNowClass::removePeer(const uint8_t mac[6])
 }
 
 void
-WifiEspNowClass::onReceive(RxCallback cb, void* cbarg)
+WifiEspNowClass::onReceive(RxCallback cb, void* arg)
 {
   m_rxCb = cb;
-  m_rxCbArg = cbarg;
+  m_rxArg = arg;
 }
 
 bool
@@ -129,7 +129,7 @@ void
 WifiEspNowClass::rx(const uint8_t* mac, const uint8_t* data, uint8_t len)
 {
   if (WifiEspNow.m_rxCb != nullptr) {
-    (*WifiEspNow.m_rxCb)(mac, data, len, WifiEspNow.m_rxCbArg);
+    (*WifiEspNow.m_rxCb)(mac, data, len, WifiEspNow.m_rxArg);
   }
 }
 

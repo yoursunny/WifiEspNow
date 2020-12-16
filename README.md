@@ -1,7 +1,11 @@
 # ESP-NOW Arduino library for ESP8266 and ESP32
 
+[![GitHub build status](https://img.shields.io/github/workflow/status/yoursunny/WifiEspNow/build)](https://github.com/yoursunny/WifiEspNow/actions) [![GitHub code size](https://img.shields.io/github/languages/code-size/yoursunny/WifiEspNow?style=flat)](https://github.com/yoursunny/WifiEspNow)
+
 **WifiEspNow** is an Arduino library for ESP-NOW, a connectionless WiFi communication protocol defined by Espressif.
 Refer to [ESP-NOW reference](https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/network/esp_now.html) for more information about how ESP-NOW works and its limitations.
+
+* [Doxygen documentation](https://wifiespnow.yoursunny.cn/)
 
 [`WifiEspNow`](src/WifiEspNow.h) is a simple wrapper of ESP-NOW functions in ESP-IDF.
 On ESP8266, it supports unicast only.

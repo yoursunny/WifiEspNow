@@ -1,9 +1,9 @@
 #include "WifiEspNowBroadcast.h"
 
-#if defined(ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <user_interface.h>
-#elif defined(ESP32)
+#elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <esp_wifi.h>
 #else
@@ -35,7 +35,7 @@ WifiEspNowBroadcastClass::loop()
   if (millis() >= m_nextScan && !m_isScanning && WiFi.scanComplete() != WIFI_SCAN_RUNNING) {
     this->scan();
   }
-#ifdef ESP32
+#ifdef ARDUINO_ARCH_ESP32
   if (m_isScanning && WiFi.scanComplete() >= 0) {
     this->processScan();
   }
@@ -50,6 +50,12 @@ WifiEspNowBroadcastClass::end()
   m_ssid = "";
 }
 
+void
+WifiEspNowBroadcastClass::onReceive(WifiEspNowClass::RxCallback cb, void* arg)
+{
+  WifiEspNow.onReceive(cb, arg);
+}
+
 bool
 WifiEspNowBroadcastClass::send(const uint8_t* buf, size_t count)
 {
@@ -60,21 +66,21 @@ void
 WifiEspNowBroadcastClass::scan()
 {
   m_isScanning = true;
-#if defined(ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266)
   scan_config sc;
-#elif defined(ESP32)
+#elif defined(ARDUINO_ARCH_ESP32)
   wifi_scan_config_t sc;
 #endif
   memset(&sc, 0, sizeof(sc));
   sc.ssid = reinterpret_cast<uint8_t*>(const_cast<char*>(m_ssid.c_str()));
-#if defined(ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266)
   wifi_station_scan(&sc, reinterpret_cast<scan_done_cb_t>(WifiEspNowBroadcastClass::processScan));
-#elif defined(ESP32)
+#elif defined(ARDUINO_ARCH_ESP32)
   esp_wifi_scan_start(&sc, false);
 #endif
 }
 
-#if defined(ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266)
 void
 WifiEspNowBroadcastClass::processScan(void* result, int status)
 {
@@ -95,7 +101,7 @@ WifiEspNowBroadcastClass::processScan2(void* result, int status)
   do {                                                                                             \
   } while (false)
 
-#elif defined(ESP32)
+#elif defined(ARDUINO_ARCH_ESP32)
 void
 WifiEspNowBroadcastClass::processScan()
 
@@ -133,7 +139,7 @@ WifiEspNowBroadcastClass::processScan()
 {
   m_isScanning = false;
   m_nextScan = millis() + m_scanFreq;
-#ifdef ESP8266
+#ifdef ARDUINO_ARCH_ESP8266
   if (status != 0) {
     return;
   }
