@@ -16,8 +16,7 @@ WifiEspNowClass WifiEspNow;
 WifiEspNowClass::WifiEspNowClass()
   : m_rxCb(nullptr)
   , m_rxCbArg(nullptr)
-{
-}
+{}
 
 bool
 WifiEspNowClass::begin()
@@ -41,14 +40,11 @@ WifiEspNowClass::listPeers(WifiEspNowPeerInfo* peers, int maxPeers) const
 {
   int n = 0;
 #if defined(ESP8266)
-  for (u8* mac = esp_now_fetch_peer(true);
-       mac != nullptr;
-       mac = esp_now_fetch_peer(false)) {
+  for (u8* mac = esp_now_fetch_peer(true); mac != nullptr; mac = esp_now_fetch_peer(false)) {
     uint8_t channel = static_cast<uint8_t>(esp_now_get_peer_channel(mac));
 #elif defined(ESP32)
   esp_now_peer_info_t peer;
-  for (esp_err_t e = esp_now_fetch_peer(true, &peer);
-       e == ESP_OK;
+  for (esp_err_t e = esp_now_fetch_peer(true, &peer); e == ESP_OK;
        e = esp_now_fetch_peer(false, &peer)) {
     uint8_t* mac = peer.peer_addr;
     uint8_t channel = peer.channel;
@@ -83,7 +79,8 @@ WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WI
 }
 #elif defined(ESP32)
 bool
-WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WIFIESPNOW_KEYLEN], int netif)
+WifiEspNowClass::addPeer(const uint8_t mac[6], int channel, const uint8_t key[WIFIESPNOW_KEYLEN],
+                         int netif)
 {
   esp_now_peer_info_t pi;
   if (esp_now_get_peer(mac, &pi) == ESP_OK) {
@@ -124,7 +121,8 @@ WifiEspNowClass::send(const uint8_t mac[6], const uint8_t* buf, size_t count)
     return false;
   }
   WifiEspNow.m_txRes = WifiEspNowSendStatus::NONE;
-  return esp_now_send(const_cast<uint8_t*>(mac), const_cast<uint8_t*>(buf), static_cast<int>(count)) == 0;
+  return esp_now_send(const_cast<uint8_t*>(mac), const_cast<uint8_t*>(buf),
+                      static_cast<int>(count)) == 0;
 }
 
 void

@@ -14,8 +14,7 @@ WifiEspNowBroadcastClass WifiEspNowBroadcast;
 
 WifiEspNowBroadcastClass::WifiEspNowBroadcastClass()
   : m_isScanning(false)
-{
-}
+{}
 
 bool
 WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
@@ -85,15 +84,16 @@ WifiEspNowBroadcastClass::processScan(void* result, int status)
 void
 WifiEspNowBroadcastClass::processScan2(void* result, int status)
 
-#define FOREACH_AP(f) \
-  do { \
-    for (bss_info* it = reinterpret_cast<bss_info*>(result); it; it = STAILQ_NEXT(it, next)) { \
-      (f)(it->bssid, it->channel); \
-    } \
+#define FOREACH_AP(f)                                                                              \
+  do {                                                                                             \
+    for (bss_info* it = reinterpret_cast<bss_info*>(result); it; it = STAILQ_NEXT(it, next)) {     \
+      (f)(it->bssid, it->channel);                                                                 \
+    }                                                                                              \
   } while (false)
 
-#define DELETE_APS \
-  do {} while(false)
+#define DELETE_APS                                                                                 \
+  do {                                                                                             \
+  } while (false)
 
 #elif defined(ESP32)
 void
@@ -102,32 +102,32 @@ WifiEspNowBroadcastClass::processScan()
 // ESP32 WiFiScanClass::_scanDone is always invoked after a scan complete event, so we can use
 // Arduino's copy of AP records, but we must check SSID, and should not always delete AP records.
 
-#define FOREACH_AP(f) \
-  do { \
-    int nNetworks = WiFi.scanComplete(); \
-    for (uint8_t i = 0; static_cast<int>(i) < nNetworks; ++i) { \
-      if (WiFi.SSID(i) != m_ssid) { \
-        continue; \
-      } \
-      (f)(WiFi.BSSID(i), static_cast<uint8_t>(WiFi.channel(i))); \
-    } \
+#define FOREACH_AP(f)                                                                              \
+  do {                                                                                             \
+    int nNetworks = WiFi.scanComplete();                                                           \
+    for (uint8_t i = 0; static_cast<int>(i) < nNetworks; ++i) {                                    \
+      if (WiFi.SSID(i) != m_ssid) {                                                                \
+        continue;                                                                                  \
+      }                                                                                            \
+      (f)(WiFi.BSSID(i), static_cast<uint8_t>(WiFi.channel(i)));                                   \
+    }                                                                                              \
   } while (false)
 
-#define DELETE_APS \
-  do { \
-    bool hasOtherSsid = false; \
-    int nNetworks = WiFi.scanComplete(); \
-    for (uint8_t i = 0; static_cast<int>(i) < nNetworks; ++i) { \
-      if (WiFi.SSID(i) == m_ssid) { \
-        continue; \
-      } \
-      hasOtherSsid = true; \
-      break; \
-    } \
-    if (!hasOtherSsid) { \
-      WiFi.scanDelete(); \
-    } \
-  } while(false)
+#define DELETE_APS                                                                                 \
+  do {                                                                                             \
+    bool hasOtherSsid = false;                                                                     \
+    int nNetworks = WiFi.scanComplete();                                                           \
+    for (uint8_t i = 0; static_cast<int>(i) < nNetworks; ++i) {                                    \
+      if (WiFi.SSID(i) == m_ssid) {                                                                \
+        continue;                                                                                  \
+      }                                                                                            \
+      hasOtherSsid = true;                                                                         \
+      break;                                                                                       \
+    }                                                                                              \
+    if (!hasOtherSsid) {                                                                           \
+      WiFi.scanDelete();                                                                           \
+    }                                                                                              \
+  } while (false)
 
 #endif
 {
@@ -144,7 +144,7 @@ WifiEspNowBroadcastClass::processScan()
   int nOldPeers = std::min(WifiEspNow.listPeers(oldPeers, MAX_PEERS), MAX_PEERS);
   const uint8_t PEER_FOUND = 0xFF; // assigned to .channel to indicate peer is matched
 
-  FOREACH_AP([&] (const uint8_t* bssid, uint8_t channel) {
+  FOREACH_AP([&](const uint8_t* bssid, uint8_t channel) {
     for (int i = 0; i < nOldPeers; ++i) {
       if (memcmp(bssid, oldPeers[i].mac, 6) != 0) {
         continue;
@@ -160,9 +160,7 @@ WifiEspNowBroadcastClass::processScan()
     }
   }
 
-  FOREACH_AP([&] (const uint8_t* bssid, uint8_t channel) {
-    WifiEspNow.addPeer(bssid, channel);
-  });
+  FOREACH_AP([&](const uint8_t* bssid, uint8_t channel) { WifiEspNow.addPeer(bssid, channel); });
 
   DELETE_APS;
 }

@@ -10,9 +10,12 @@ static const int LED_PIN = 2;    // ESP-12F blue LED
 
 int ledState = HIGH;
 
-void processRx(const uint8_t mac[6], const uint8_t* buf, size_t count, void* cbarg) {
-  Serial.printf("Message from %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-  for (int i = 0; i < count; ++i) {
+void
+processRx(const uint8_t mac[6], const uint8_t* buf, size_t count, void* cbarg)
+{
+  Serial.printf("Message from %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3],
+                mac[4], mac[5]);
+  for (size_t i = 0; i < count; ++i) {
     Serial.print(static_cast<char>(buf[i]));
   }
   Serial.println();
@@ -21,7 +24,9 @@ void processRx(const uint8_t mac[6], const uint8_t* buf, size_t count, void* cba
   ledState = 1 - ledState;
 }
 
-void setup() {
+void
+setup()
+{
   Serial.begin(115200);
   Serial.println();
 
@@ -43,9 +48,12 @@ void setup() {
   Serial.println("Press the button to send a message");
 }
 
-void sendMessage() {
+void
+sendMessage()
+{
   char msg[60];
-  int len = snprintf(msg, sizeof(msg), "hello ESP-NOW from %s at %lu", WiFi.softAPmacAddress().c_str(), millis());
+  int len = snprintf(msg, sizeof(msg), "hello ESP-NOW from %s at %lu",
+                     WiFi.softAPmacAddress().c_str(), millis());
   WifiEspNowBroadcast.send(reinterpret_cast<const uint8_t*>(msg), len);
 
   Serial.println("Sending message");
@@ -55,12 +63,15 @@ void sendMessage() {
   WifiEspNowPeerInfo peers[MAX_PEERS];
   int nPeers = std::min(WifiEspNow.listPeers(peers, MAX_PEERS), MAX_PEERS);
   for (int i = 0; i < nPeers; ++i) {
-    Serial.printf(" %02X:%02X:%02X:%02X:%02X:%02X", peers[i].mac[0], peers[i].mac[1], peers[i].mac[2], peers[i].mac[3], peers[i].mac[4], peers[i].mac[5]);
+    Serial.printf(" %02X:%02X:%02X:%02X:%02X:%02X", peers[i].mac[0], peers[i].mac[1],
+                  peers[i].mac[2], peers[i].mac[3], peers[i].mac[4], peers[i].mac[5]);
   }
   Serial.println();
 }
 
-void loop() {
+void
+loop()
+{
   if (digitalRead(BUTTON_PIN) == LOW) { // button is pressed
     sendMessage();
 
