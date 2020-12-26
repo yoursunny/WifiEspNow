@@ -48,6 +48,9 @@ setup()
   WiFi.mode(WIFI_AP);
   WiFi.softAP("ESPNOW", nullptr, 3);
   WiFi.softAPdisconnect(false);
+  // WiFi must be powered on to use ESP-NOW unicast.
+  // It could be either AP or STA mode, and does not have to be connected.
+  // For best results, ensure both devices are using the same WiFi channel.
 
   Serial.print("MAC address of this node is ");
   Serial.println(WiFi.softAPmacAddress());

@@ -61,6 +61,10 @@ setup()
     Serial.println("WifiEspNowBroadcast.begin() failed");
     ESP.restart();
   }
+  // WifiEspNowBroadcast.begin() function sets WiFi to AP+STA mode.
+  // The AP interface is also controlled by WifiEspNowBroadcast.
+  // You may use the STA interface after calling WifiEspNowBroadcast.begin().
+  // For best results, ensure all devices are using the same WiFi channel.
 
   WifiEspNowBroadcast.onReceive(processRx, nullptr);
 

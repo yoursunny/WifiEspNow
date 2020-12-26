@@ -23,7 +23,11 @@ WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
   m_nextScan = 0;
   m_scanFreq = scanFreq;
 
+  // AP mode for announcing our presence, STA mode for scanning
   WiFi.mode(WIFI_AP_STA);
+  // disconnect from any previously saved SSID, so that the specified channel can take effect
+  WiFi.disconnect();
+  // establish AP at the specified channel to announce our presence
   WiFi.softAP(ssid, nullptr, channel);
 
   return WifiEspNow.begin();
