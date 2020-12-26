@@ -1,3 +1,17 @@
+/**
+ * @file
+ *
+ * EspNowBroadcast.ino demonstrates how to perform ESP-NOW pseudo broadcast with @c WifiEspNowBroadcast .
+ * You need two or more ESP8266 or ESP32 devices to run this example.
+ *
+ * All devices should run the same program.
+ * You may need to modify the PIN numbers so that you can observe the effect.
+ *
+ * With the program running on several devices:
+ * @li Press the button to transmit a message.
+ * @li When a device receives a message, it will toggle its LED between "on" and "off" states.
+ */
+
 #include <WifiEspNowBroadcast.h>
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
@@ -5,8 +19,19 @@
 #include <WiFi.h>
 #endif
 
-static const int BUTTON_PIN = 0; // "flash" button on NodeMCU, Witty Cloud, etc
-static const int LED_PIN = 2;    // ESP-12F blue LED
+/**
+ * @brief PIN number of a button.
+ *
+ * The default `0` is the "flash" button on NodeMCU, Witty Cloud, Heltec WiFi_Kit_32, etc.
+ */
+static const int BUTTON_PIN = 0;
+
+/**
+ * @brief PIN number of an LED.
+ *
+ * The default `2` is the blue LED on ESP-12F.
+ */
+static const int LED_PIN = 2;
 
 int ledState = HIGH;
 

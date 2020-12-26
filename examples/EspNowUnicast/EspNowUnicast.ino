@@ -1,3 +1,22 @@
+/**
+ * @file
+ *
+ * EspNowUnicast.ino demonstrates how to transmit unicast ESP-NOW messages with @c WifiEspNow .
+ * You need two ESP8266 or ESP32 devices to run this example.
+ *
+ * Unicast communication requires the sender to specify the MAC address of the recipient.
+ * Thus, you must modify this program for each device.
+ *
+ * The recommended workflow is:
+ * @li 1. Flash the program onto device A.
+ * @li 2. Run the program on device A, look at serial console for its MAC address.
+ * @li 3. Copy the MAC address of device A, paste it in the @c PEER variable below.
+ * @li 4. Flash the program that contains A's MAC address onto device B.
+ * @li 5. Run the program on device A, look at serial console for its MAC address.
+ * @li 6. Copy the MAC address of device B, paste it in the @c PEER variable below.
+ * @li 7. Flash the program that contains B's MAC address onto device A.
+ */
+
 #include <WifiEspNow.h>
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
@@ -5,6 +24,7 @@
 #include <WiFi.h>
 #endif
 
+// The recipient MAC address. It must be modified for each device.
 static uint8_t PEER[]{0x5E, 0xCF, 0x7F, 0x90, 0xFA, 0xE8};
 
 void
@@ -31,6 +51,14 @@ setup()
 
   Serial.print("MAC address of this node is ");
   Serial.println(WiFi.softAPmacAddress());
+
+  uint8_t mac[6];
+  WiFi.softAPmacAddress(mac);
+  Serial.println();
+  Serial.println("You can paste the following into the program for the other device:");
+  Serial.printf("static uint8_t PEER[]{0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X};\n", mac[0],
+                mac[1], mac[2], mac[3], mac[4], mac[5]);
+  Serial.println();
 
   bool ok = WifiEspNow.begin();
   if (!ok) {

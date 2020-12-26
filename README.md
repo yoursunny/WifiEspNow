@@ -7,6 +7,8 @@ Refer to [ESP-NOW reference](https://docs.espressif.com/projects/esp-idf/en/late
 
 * [Doxygen documentation](https://wifiespnow.yoursunny.cn/)
 
+## Features
+
 [`WifiEspNow`](src/WifiEspNow.h) is a simple wrapper of ESP-NOW functions in ESP-IDF.
 On ESP8266, it supports unicast only.
 On ESP32, it supports both unicast and multicast.
@@ -15,3 +17,9 @@ On ESP32, it supports both unicast and multicast.
 Each device advertises a specific WiFi SSID, and discovers each other through BSSID scanning.
 Then, messages are transmitted separately toward every peer via ESP-NOW unicast.
 This is my custom protocol, which differs from `WifiEspNow` multicast.
+
+## Installation
+
+1. Clone this repository under `$HOME/Arduino/libraries` directory.
+2. Add `#include <WifiEspNow.h>` or `#include <WifiEspNowBroadcast.h>` to your sketch.
+3. Check out the [examples](examples/) for how to use.
