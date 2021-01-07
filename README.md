@@ -5,7 +5,7 @@
 **WifiEspNow** is an Arduino library for ESP-NOW, a connectionless WiFi communication protocol defined by Espressif.
 Refer to [ESP-NOW reference](https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/network/esp_now.html) for more information about how ESP-NOW works and its limitations.
 
-* [Doxygen documentation](https://wifiespnow.yoursunny.cn/)
+* [Doxygen documentation](https://wifiespnow.yoursunny.dev/)
 
 ## Features
 
