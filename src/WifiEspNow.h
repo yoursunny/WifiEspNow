@@ -16,6 +16,9 @@
 #include <cstddef>
 #include <cstdint>
 
+/** @brief Address length. */
+static const int WIFIESPNOW_ALEN = 6;
+
 /** @brief Key length. */
 static const int WIFIESPNOW_KEYLEN = 16;
 
@@ -23,14 +26,14 @@ static const int WIFIESPNOW_KEYLEN = 16;
 static const int WIFIESPNOW_MAXMSGLEN = 250;
 
 struct WifiEspNowPeerInfo {
-  uint8_t mac[6];
+  uint8_t mac[WIFIESPNOW_ALEN];
   uint8_t channel;
 };
 
 /** @brief Result of send operation. */
 enum class WifiEspNowSendStatus : uint8_t {
   NONE = 0, ///< result unknown, send in progress
-  OK   = 1, ///< sent successfully
+  OK   = 1, ///< unicast message acknowledged by peer; multicast message transmitted
   FAIL = 2, ///< sending failed
 };
 
@@ -51,6 +54,14 @@ public:
   end();
 
   /**
+   * @brief Set primary key, also known as KOK or PMK.
+   * @param key primary encryption key.
+   * @return whether success.
+   */
+  bool
+  setPrimaryKey(const uint8_t key[WIFIESPNOW_KEYLEN]);
+
+  /**
    * @brief List current peers.
    * @param[out] peers buffer for peer information.
    * @param maxPeers buffer size.
@@ -65,7 +76,7 @@ public:
    * @return whether peer exists.
    */
   bool
-  hasPeer(const uint8_t mac[6]) const;
+  hasPeer(const uint8_t mac[WIFIESPNOW_ALEN]) const;
 
   /**
    * @brief Add a peer or change peer channel.
@@ -74,14 +85,13 @@ public:
    * @param key encryption key, nullptr to disable encryption.
    * @param netif (ESP32 only) WiFi interface.
    * @return whether success.
-   * @note To change peer key, remove the peer and re-add.
    */
 #if defined(ARDUINO_ARCH_ESP8266)
   bool
-  addPeer(const uint8_t mac[6], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr);
+  addPeer(const uint8_t mac[WIFIESPNOW_ALEN], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr);
 #elif defined(ARDUINO_ARCH_ESP32)
   bool
-  addPeer(const uint8_t mac[6], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr, int netif = ESP_IF_WIFI_AP);
+  addPeer(const uint8_t mac[WIFIESPNOW_ALEN], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr, int netif = ESP_IF_WIFI_AP);
 #endif
 
   /**
@@ -90,9 +100,9 @@ public:
    * @return whether success.
    */
   bool
-  removePeer(const uint8_t mac[6]);
+  removePeer(const uint8_t mac[WIFIESPNOW_ALEN]);
 
-  using RxCallback = void (*)(const uint8_t mac[6], const uint8_t* buf, size_t count, void* cbarg);
+  using RxCallback = void (*)(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg);
 
   /**
    * @brief Set receive callback.
@@ -111,12 +121,9 @@ public:
    * @return whether success (message queued for transmission).
    */
   bool
-  send(const uint8_t mac[6], const uint8_t* buf, size_t count);
+  send(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count);
 
-  /**
-   * @brief Retrieve status of last sent message.
-   * @return whether success (unicast message received by peer, multicast message sent).
-   */
+  /** @brief Retrieve status of last sent message. */
   WifiEspNowSendStatus
   getSendStatus() const
   {
@@ -133,7 +140,7 @@ private:
 private:
   RxCallback m_rxCb = nullptr;
   void* m_rxArg = nullptr;
-  WifiEspNowSendStatus m_txRes;
+  WifiEspNowSendStatus m_txRes = WifiEspNowSendStatus::NONE;
   bool m_ready = false;
 };
 

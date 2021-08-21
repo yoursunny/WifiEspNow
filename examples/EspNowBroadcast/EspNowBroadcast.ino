@@ -36,7 +36,7 @@ static const int LED_PIN = 2;
 int ledState = HIGH;
 
 void
-processRx(const uint8_t mac[6], const uint8_t* buf, size_t count, void* cbarg)
+processRx(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg)
 {
   Serial.printf("Message from %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3],
                 mac[4], mac[5]);

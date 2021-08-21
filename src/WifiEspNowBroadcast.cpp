@@ -10,6 +10,19 @@
 #error "This library supports ESP8266 and ESP32 only."
 #endif
 
+#define WIFIESPNOW_DEBUG
+#ifdef WIFIESPNOW_DEBUG
+#define LOG(...)                                                                                   \
+  do {                                                                                             \
+    Serial.printf("[WifiEspNowBroadcast] " __VA_ARGS__);                                           \
+    Serial.println();                                                                              \
+  } while (false)
+#else
+#define LOG(...)                                                                                   \
+  do {                                                                                             \
+  } while (false)
+#endif
+
 WifiEspNowBroadcastClass WifiEspNowBroadcast;
 
 WifiEspNowBroadcastClass::WifiEspNowBroadcastClass()
@@ -34,6 +47,14 @@ WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
 }
 
 void
+WifiEspNowBroadcastClass::end()
+{
+  WifiEspNow.end();
+  WiFi.softAPdisconnect();
+  m_ssid = "";
+}
+
+void
 WifiEspNowBroadcastClass::loop()
 {
   if (millis() >= m_nextScan && !m_isScanning && WiFi.scanComplete() != WIFI_SCAN_RUNNING) {
@@ -47,35 +68,15 @@ WifiEspNowBroadcastClass::loop()
 }
 
 void
-WifiEspNowBroadcastClass::end()
-{
-  WifiEspNow.end();
-  WiFi.softAPdisconnect();
-  m_ssid = "";
-}
-
-void
-WifiEspNowBroadcastClass::onReceive(WifiEspNowClass::RxCallback cb, void* arg)
-{
-  WifiEspNow.onReceive(cb, arg);
-}
-
-bool
-WifiEspNowBroadcastClass::send(const uint8_t* buf, size_t count)
-{
-  return WifiEspNow.send(nullptr, buf, count);
-}
-
-void
 WifiEspNowBroadcastClass::scan()
 {
+  LOG("scan()");
   m_isScanning = true;
 #if defined(ARDUINO_ARCH_ESP8266)
-  scan_config sc;
+  scan_config sc{};
 #elif defined(ARDUINO_ARCH_ESP32)
-  wifi_scan_config_t sc;
+  wifi_scan_config_t sc{};
 #endif
-  memset(&sc, 0, sizeof(sc));
   sc.ssid = reinterpret_cast<uint8_t*>(const_cast<char*>(m_ssid.c_str()));
 #if defined(ARDUINO_ARCH_ESP8266)
   wifi_station_scan(&sc, reinterpret_cast<scan_done_cb_t>(WifiEspNowBroadcastClass::processScan));
@@ -149,6 +150,8 @@ WifiEspNowBroadcastClass::processScan()
   }
 #endif
 
+  LOG("processScan()");
+
   const int MAX_PEERS = 20;
   WifiEspNowPeerInfo oldPeers[MAX_PEERS];
   int nOldPeers = std::min(WifiEspNow.listPeers(oldPeers, MAX_PEERS), MAX_PEERS);
@@ -156,21 +159,29 @@ WifiEspNowBroadcastClass::processScan()
 
   FOREACH_AP([&](const uint8_t* bssid, uint8_t channel) {
     for (int i = 0; i < nOldPeers; ++i) {
-      if (memcmp(bssid, oldPeers[i].mac, 6) != 0) {
-        continue;
+      WifiEspNowPeerInfo* p = &oldPeers[i];
+      if (std::equal(p->mac, p->mac + WIFIESPNOW_ALEN, bssid)) {
+        p->channel = PEER_FOUND;
+        break;
       }
-      oldPeers[i].channel = PEER_FOUND;
-      break;
     }
   });
 
   for (int i = 0; i < nOldPeers; ++i) {
-    if (oldPeers[i].channel != PEER_FOUND) {
-      WifiEspNow.removePeer(oldPeers[i].mac);
+    WifiEspNowPeerInfo* p = &oldPeers[i];
+    if (p->channel == PEER_FOUND) {
+      continue;
     }
+    LOG("processScan removePeer(%02x:%02x:%02x:%02x:%02x:%02x)", p->mac[0], p->mac[1], p->mac[2],
+        p->mac[3], p->mac[4], p->mac[5]);
+    WifiEspNow.removePeer(p->mac);
   }
 
-  FOREACH_AP([&](const uint8_t* bssid, uint8_t channel) { WifiEspNow.addPeer(bssid, channel); });
+  FOREACH_AP([&](const uint8_t* mac, uint8_t channel) {
+    LOG("processScan addPeer(%02x:%02x:%02x:%02x:%02x:%02x)", mac[0], mac[1], mac[2], mac[3],
+        mac[4], mac[5]);
+    WifiEspNow.addPeer(mac, channel);
+  });
 
   DELETE_APS;
 }

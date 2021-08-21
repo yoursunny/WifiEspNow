@@ -20,6 +20,10 @@ public:
   bool
   begin(const char* ssid, int channel = 1, int scanFreq = 15000);
 
+  /** @brief Stop ESP-NOW. */
+  void
+  end();
+
   /**
    * @brief Refresh peers if scanning is due.
    *
@@ -28,10 +32,6 @@ public:
   void
   loop();
 
-  /** @brief Stop ESP-NOW. */
-  void
-  end();
-
   /**
    * @brief Set receive callback.
    * @param cb the callback.
@@ -39,7 +39,10 @@ public:
    * @note Only one callback is allowed; this replaces any previous callback.
    */
   void
-  onReceive(WifiEspNowClass::RxCallback cb, void* arg);
+  onReceive(WifiEspNowClass::RxCallback cb, void* arg)
+  {
+    WifiEspNow.onReceive(cb, arg);
+  }
 
   /**
    * @brief Broadcast a message.
@@ -48,7 +51,10 @@ public:
    * @return whether success (message queued for transmission).
    */
   bool
-  send(const uint8_t* buf, size_t count);
+  send(const uint8_t* buf, size_t count)
+  {
+    return WifiEspNow.send(nullptr, buf, count);
+  }
 
 private:
   void
@@ -77,7 +83,7 @@ private:
  *
  * In pseudo broadcast mode, every node announces itself as a group member by advertising a
  * certain AP SSID. A node periodically scans other BSSIDs announcing the same SSID, and adds
- * them as ESP-NOW peers. Messages are sent to all knows peers.
+ * them as ESP-NOW peers. Messages are sent to all known peers.
  *
  * Pseudo broadcast does not depend on ESP-NOW API to support broadcast.
  */
