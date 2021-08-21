@@ -13,8 +13,6 @@
 
 WifiEspNowClass WifiEspNow;
 
-WifiEspNowClass::WifiEspNowClass() = default;
-
 bool
 WifiEspNowClass::begin()
 {

@@ -8,8 +8,6 @@
 class WifiEspNowBroadcastClass
 {
 public:
-  WifiEspNowBroadcastClass();
-
   /**
    * @brief Initialize ESP-NOW with pseudo broadcast.
    * @param ssid AP SSID to announce and find peers.
@@ -31,6 +29,16 @@ public:
    */
   void
   loop();
+
+  /**
+   * @brief Set encryption keys.
+   * @param primary primary key, also known as KOK or PMK.
+   * @param peer peer key, also known as LMK; nullptr to disable encryption.
+   *             The same peer key is applied to every discovered peer.
+   * @return whether success.
+   */
+  bool
+  setKey(const uint8_t primary[WIFIESPNOW_KEYLEN], const uint8_t peer[WIFIESPNOW_KEYLEN] = nullptr);
 
   /**
    * @brief Set receive callback.
@@ -73,9 +81,11 @@ private:
 
 private:
   String m_ssid;
-  int m_scanFreq;
-  unsigned long m_nextScan;
-  bool m_isScanning;
+  uint8_t m_peerKey[WIFIESPNOW_KEYLEN];
+  int m_scanFreq = 0;
+  unsigned long m_nextScan = 0;
+  bool m_isScanning = false;
+  bool m_hasPeerKey = false;
 };
 
 /**

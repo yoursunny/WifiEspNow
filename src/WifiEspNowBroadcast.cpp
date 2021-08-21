@@ -10,7 +10,7 @@
 #error "This library supports ESP8266 and ESP32 only."
 #endif
 
-#define WIFIESPNOW_DEBUG
+// #define WIFIESPNOW_DEBUG
 #ifdef WIFIESPNOW_DEBUG
 #define LOG(...)                                                                                   \
   do {                                                                                             \
@@ -24,10 +24,6 @@
 #endif
 
 WifiEspNowBroadcastClass WifiEspNowBroadcast;
-
-WifiEspNowBroadcastClass::WifiEspNowBroadcastClass()
-  : m_isScanning(false)
-{}
 
 bool
 WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
@@ -65,6 +61,19 @@ WifiEspNowBroadcastClass::loop()
     this->processScan();
   }
 #endif
+}
+
+bool
+WifiEspNowBroadcastClass::setKey(const uint8_t primary[WIFIESPNOW_KEYLEN],
+                                 const uint8_t peer[WIFIESPNOW_KEYLEN])
+{
+  if (peer == nullptr) {
+    m_hasPeerKey = false;
+    return true;
+  }
+  m_hasPeerKey = true;
+  std::copy_n(peer, WIFIESPNOW_KEYLEN, m_peerKey);
+  return WifiEspNow.setPrimaryKey(primary);
 }
 
 void
@@ -180,7 +189,7 @@ WifiEspNowBroadcastClass::processScan()
   FOREACH_AP([&](const uint8_t* mac, uint8_t channel) {
     LOG("processScan addPeer(%02x:%02x:%02x:%02x:%02x:%02x)", mac[0], mac[1], mac[2], mac[3],
         mac[4], mac[5]);
-    WifiEspNow.addPeer(mac, channel);
+    WifiEspNow.addPeer(mac, channel, m_hasPeerKey ? m_peerKey : nullptr);
   });
 
   DELETE_APS;

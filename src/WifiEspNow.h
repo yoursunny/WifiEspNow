@@ -40,8 +40,6 @@ enum class WifiEspNowSendStatus : uint8_t {
 class WifiEspNowClass
 {
 public:
-  WifiEspNowClass();
-
   /**
    * @brief Initialize ESP-NOW.
    * @return whether success.
