@@ -9,47 +9,50 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: arduino/setup-arduino-cli@v1.1.1
-      - name: install Arduino cores and libraries
+      - id: cores
+        name: refresh Arduino cores
         run: |
+          echo 'https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://espressif.github.io/arduino-esp32/package_esp32_index.json' >~/arduino-cores.txt
           arduino-cli version
-          arduino-cli core update-index --additional-urls $ARDUINO_CORE_URI
-          arduino-cli core install esp8266:esp8266 esp32:esp32 --additional-urls $ARDUINO_CORE_URI
-        env:
-          ARDUINO_CORE_URI: https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          arduino-cli update --additional-urls "$(<~/arduino-cores.txt)"
+          echo ::set-output name=d::$(sha256sum ~/.arduino15/package_*index.json | sha256sum | cut -d' ' -f1)
+      - name: cache Arduino cores
+        uses: actions/cache@v2
+        with:
+          path: ~/.arduino15/staging/packages
+          key: cores-${{ steps.cores.outputs.d }}
+      - name: install Arduino cores
+        run: |
+          arduino-cli core install esp8266:esp8266 esp32:esp32 --additional-urls "$(<~/arduino-cores.txt)"
       - uses: actions/setup-python@v2
         with:
           python-version: '3.9'
       - name: install dependencies
         run: |
-          sudo apt-get install clang-format-8 doxygen
-          python -m pip install --upgrade pip
           pip install esptool
+          sudo apt-get install -y --no-install-recommends clang-format-11 doxygen
       - uses: actions/checkout@v2
       - name: check code style
         run: |
           mk/format-code.sh
-          [[ $(git status --porcelain | tee /dev/stderr | wc -l) -eq 0 ]]
-      - name: link library
+          git diff --exit-code
+      - name: prepare Arduino libraries
         run: |
           mkdir -p $HOME/Arduino/libraries
           cd $HOME/Arduino/libraries
           ln -s $GITHUB_WORKSPACE WifiEspNow
-      - name: compile in ESP8266
+      - name: compile examples
         run: |
-          arduino-cli compile -b $FQBN examples/EspNowUnicast
-          arduino-cli compile -b $FQBN examples/EspNowBroadcast
-        env:
-          FQBN: esp8266:esp8266:nodemcuv2
-      - name: compile in ESP32
-        run: |
-          arduino-cli compile -b $FQBN examples/EspNowUnicast
-          arduino-cli compile -b $FQBN examples/EspNowBroadcast
-        env:
-          FQBN: esp32:esp32:heltec_wifi_kit_32
+          for B in esp8266:esp8266:nodemcuv2 esp32:esp32:heltec_wifi_kit_32; do
+            for E in $(find ./examples -name '*.ino' -printf '%h\n'); do
+              printf "\n----\033[1;35m Build %s in %s \033[0m----\n" ${E##*/} $B
+              arduino-cli compile -b $B $E
+            done
+          done
       - name: build docs
         run: docs/build.sh
       - name: deploy docs
-        uses: South-Paw/action-netlify-deploy@v1.2.0
+        uses: South-Paw/action-netlify-deploy@v1.2.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
