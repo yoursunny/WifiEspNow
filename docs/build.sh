@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
 doxygen Doxyfile 2>&1 | ./filter-Doxygen-warning.awk 1>&2
