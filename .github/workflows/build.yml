@@ -56,10 +56,15 @@ jobs:
       - name: Build docs
         run: docs/build.sh
       - name: Deploy docs
-        uses: South-Paw/action-netlify-deploy@v1.2.1
+        uses: nwtgck/actions-netlify@v1.2
         with:
+          publish-dir: ./docs/html/
+          production-deploy: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          netlify-site-id: cd06b281-7d26-4689-a5d1-dcc1b3a1c3e3
-          build-dir: ./docs/html/
+          deploy-message: ${{ github.sha }} ${{ github.run_id }}
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: cd06b281-7d26-4689-a5d1-dcc1b3a1c3e3
         if: ${{ github.repository == 'yoursunny/WifiEspNow' && github.event_name == 'push' }}
