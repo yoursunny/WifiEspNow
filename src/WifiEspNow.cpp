@@ -17,7 +17,7 @@ bool
 WifiEspNowClass::begin() {
   end();
   m_ready =
-    esp_now_init() == 0 &&
+    WiFi.getMode() != 0 && esp_now_init() == 0 &&
 #ifdef ARDUINO_ARCH_ESP8266
     esp_now_set_self_role(ESP_NOW_ROLE_COMBO) == 0 &&
 #endif
