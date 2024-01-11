@@ -26,8 +26,7 @@
 WifiEspNowBroadcastClass WifiEspNowBroadcast;
 
 bool
-WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
-{
+WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq) {
   m_ssid = ssid;
   m_nextScan = 0;
   m_scanFreq = scanFreq;
@@ -43,16 +42,14 @@ WifiEspNowBroadcastClass::begin(const char* ssid, int channel, int scanFreq)
 }
 
 void
-WifiEspNowBroadcastClass::end()
-{
+WifiEspNowBroadcastClass::end() {
   WifiEspNow.end();
   WiFi.softAPdisconnect();
   m_ssid = "";
 }
 
 void
-WifiEspNowBroadcastClass::loop()
-{
+WifiEspNowBroadcastClass::loop() {
   if (millis() >= m_nextScan && !m_isScanning && WiFi.scanComplete() != WIFI_SCAN_RUNNING) {
     this->scan();
   }
@@ -65,8 +62,7 @@ WifiEspNowBroadcastClass::loop()
 
 bool
 WifiEspNowBroadcastClass::setKey(const uint8_t primary[WIFIESPNOW_KEYLEN],
-                                 const uint8_t peer[WIFIESPNOW_KEYLEN])
-{
+                                 const uint8_t peer[WIFIESPNOW_KEYLEN]) {
   if (peer == nullptr) {
     m_hasPeerKey = false;
     return true;
@@ -77,8 +73,7 @@ WifiEspNowBroadcastClass::setKey(const uint8_t primary[WIFIESPNOW_KEYLEN],
 }
 
 void
-WifiEspNowBroadcastClass::scan()
-{
+WifiEspNowBroadcastClass::scan() {
   LOG("scan()");
   m_isScanning = true;
 #if defined(ARDUINO_ARCH_ESP8266)
@@ -96,8 +91,7 @@ WifiEspNowBroadcastClass::scan()
 
 #if defined(ARDUINO_ARCH_ESP8266)
 void
-WifiEspNowBroadcastClass::processScan(void* result, int status)
-{
+WifiEspNowBroadcastClass::processScan(void* result, int status) {
   WifiEspNowBroadcast.processScan2(result, status);
 }
 

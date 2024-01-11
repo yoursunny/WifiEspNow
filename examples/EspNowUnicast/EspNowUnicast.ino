@@ -29,8 +29,7 @@ static uint8_t PEER[]{0x02, 0x00, 0x00, 0x45, 0x53, 0x50};
 
 void
 printReceivedMessage(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count,
-                     void* arg)
-{
+                     void* arg) {
   Serial.printf("Message from %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3],
                 mac[4], mac[5]);
   for (int i = 0; i < static_cast<int>(count); ++i) {
@@ -40,8 +39,7 @@ printReceivedMessage(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, siz
 }
 
 void
-setup()
-{
+setup() {
   Serial.begin(115200);
   Serial.println();
 
@@ -81,8 +79,7 @@ setup()
 }
 
 void
-loop()
-{
+loop() {
   char msg[60];
   int len = snprintf(msg, sizeof(msg), "hello ESP-NOW from %s at %lu",
                      WiFi.softAPmacAddress().c_str(), millis());

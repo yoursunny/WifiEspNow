@@ -36,8 +36,7 @@ static const int LED_PIN = 2;
 int ledState = HIGH;
 
 void
-processRx(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg)
-{
+processRx(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, void* arg) {
   Serial.printf("Message from %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3],
                 mac[4], mac[5]);
   for (size_t i = 0; i < count; ++i) {
@@ -50,8 +49,7 @@ processRx(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, size_t count, 
 }
 
 void
-setup()
-{
+setup() {
   Serial.begin(115200);
   Serial.println();
 
@@ -78,8 +76,7 @@ setup()
 }
 
 void
-sendMessage()
-{
+sendMessage() {
   char msg[60];
   int len = snprintf(msg, sizeof(msg), "hello ESP-NOW from %s at %lu",
                      WiFi.softAPmacAddress().c_str(), millis());
@@ -99,13 +96,13 @@ sendMessage()
 }
 
 void
-loop()
-{
+loop() {
   if (digitalRead(BUTTON_PIN) == LOW) { // button is pressed
     sendMessage();
 
-    while (digitalRead(BUTTON_PIN) == LOW) // wait for button release
+    while (digitalRead(BUTTON_PIN) == LOW) { // wait for button release
       ;
+    }
   }
 
   WifiEspNowBroadcast.loop();
