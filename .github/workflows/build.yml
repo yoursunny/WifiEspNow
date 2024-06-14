@@ -7,14 +7,17 @@ permissions: {}
 jobs:
   build:
     runs-on: ubuntu-22.04
+    env:
+      ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: |
+        https://arduino.esp8266.com/stable/package_esp8266com_index.json
+        https://espressif.github.io/arduino-esp32/package_esp32_index.json
     steps:
       - uses: arduino/setup-arduino-cli@v1
       - id: cores
         name: Refresh Arduino cores
         run: |
-          echo 'https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://espressif.github.io/arduino-esp32/package_esp32_index.json' >~/arduino-cores.txt
           arduino-cli version
-          arduino-cli update --additional-urls "$(<~/arduino-cores.txt)"
+          arduino-cli update
           echo d=$(sha256sum ~/.arduino15/package_*index.json | sha256sum | cut -d' ' -f1) >> $GITHUB_OUTPUT
       - name: Cache Arduino cores
         uses: actions/cache@v3
@@ -23,7 +26,7 @@ jobs:
           key: cores-${{ steps.cores.outputs.d }}
       - name: Install Arduino cores
         run: |
-          arduino-cli core install esp8266:esp8266 esp32:esp32 --additional-urls "$(<~/arduino-cores.txt)"
+          arduino-cli core install esp8266:esp8266 esp32:esp32
       - name: Install dependencies
         run: |
           sudo apt-get install -y --no-install-recommends clang-format-15 doxygen
@@ -35,8 +38,7 @@ jobs:
       - name: Prepare Arduino libraries
         run: |
           mkdir -p $HOME/Arduino/libraries
-          cd $HOME/Arduino/libraries
-          ln -s $GITHUB_WORKSPACE WifiEspNow
+          ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/WifiEspNow
       - name: Compile examples
         run: |
           for B in esp8266:esp8266:nodemcuv2 esp32:esp32:heltec_wifi_kit_32; do
@@ -48,7 +50,7 @@ jobs:
       - name: Build docs
         run: docs/build.sh
       - name: Deploy docs
-        uses: nwtgck/actions-netlify@v2.1.0
+        uses: nwtgck/actions-netlify@v3
         with:
           publish-dir: ./docs/html/
           production-deploy: true
