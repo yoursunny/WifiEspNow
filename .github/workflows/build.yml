@@ -20,7 +20,7 @@ jobs:
           arduino-cli update
           echo d=$(sha256sum ~/.arduino15/package_*index.json | sha256sum | cut -d' ' -f1) >> $GITHUB_OUTPUT
       - name: Cache Arduino cores
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.arduino15/staging/packages
           key: cores-${{ steps.cores.outputs.d }}
@@ -64,3 +64,4 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: cd06b281-7d26-4689-a5d1-dcc1b3a1c3e3
         if: ${{ github.repository == 'yoursunny/WifiEspNow' && github.event_name == 'push' }}
+    timeout-minutes: 30
