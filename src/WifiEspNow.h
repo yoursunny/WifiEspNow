@@ -1,7 +1,7 @@
 /**
- * @mainpage WifiEspNow
+ * @mainpage WifiEspNow API Documentation
  *
- * https://github.com/yoursunny/WifiEspNow
+ * <a href="https://github.com/yoursunny/WifiEspNow" rel="nofollow">https://github.com/yoursunny/WifiEspNow</a>
  */
 
 #ifndef WIFIESPNOW_H
