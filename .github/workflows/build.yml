@@ -6,7 +6,7 @@ on:
 permissions: {}
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: |
         https://arduino.esp8266.com/stable/package_esp8266com_index.json
@@ -20,7 +20,7 @@ jobs:
           arduino-cli update
           echo d=$(sha256sum ~/.arduino15/package_*index.json | sha256sum | cut -d' ' -f1) >> $GITHUB_OUTPUT
       - name: Cache Arduino cores
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.arduino15/staging/packages
           key: cores-${{ steps.cores.outputs.d }}
@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install -y --no-install-recommends clang-format-15 doxygen
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check code style
         run: |
           mk/format-code.sh
