@@ -12,7 +12,7 @@
  * @li 2. Run the program on device A, look at serial console for its MAC address.
  * @li 3. Copy the MAC address of device A, paste it in the @c PEER variable below.
  * @li 4. Flash the program that contains A's MAC address onto device B.
- * @li 5. Run the program on device A, look at serial console for its MAC address.
+ * @li 5. Run the program on device B, look at serial console for its MAC address.
  * @li 6. Copy the MAC address of device B, paste it in the @c PEER variable below.
  * @li 7. Flash the program that contains B's MAC address onto device A.
  */
