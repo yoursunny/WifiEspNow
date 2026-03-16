@@ -81,16 +81,17 @@ public:
    * @param mac peer MAC address.
    * @param channel peer channel, 0 for current channel.
    * @param key encryption key, nullptr to disable encryption.
-   * @param netif (ESP32 only) WiFi interface.
+   * @param netif WiFi interface (ESP32 only, ignored on ESP8266).
    * @return whether success.
    */
-#if defined(ARDUINO_ARCH_ESP8266)
   bool
-  addPeer(const uint8_t mac[WIFIESPNOW_ALEN], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr);
+  addPeer(const uint8_t mac[WIFIESPNOW_ALEN], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr,
+  #if defined(ARDUINO_ARCH_ESP8266)
+    int netif = 0
 #elif defined(ARDUINO_ARCH_ESP32)
-  bool
-  addPeer(const uint8_t mac[WIFIESPNOW_ALEN], int channel = 0, const uint8_t key[WIFIESPNOW_KEYLEN] = nullptr, int netif = ESP_IF_WIFI_AP);
+    int netif = ESP_IF_WIFI_AP
 #endif
+  );
 
   /**
    * @brief Remove a peer.
@@ -129,17 +130,11 @@ public:
   }
 
 private:
-  static void
-  rx(const uint8_t* mac, const uint8_t* data, uint8_t len);
-
-  static void
-  tx(const uint8_t* mac, uint8_t status);
-
-private:
   RxCallback m_rxCb = nullptr;
   void* m_rxArg = nullptr;
   WifiEspNowSendStatus m_txRes = WifiEspNowSendStatus::NONE;
   bool m_ready = false;
+  friend class WifiEspNowInternal;
 };
 
 /** @brief ESP-NOW API. */

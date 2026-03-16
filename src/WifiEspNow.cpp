@@ -13,16 +13,41 @@
 
 WifiEspNowClass WifiEspNow;
 
+class WifiEspNowInternal {
+public:
+  static void
+#if defined(ARDUINO_ARCH_ESP8266)
+  rx(uint8_t* mac, uint8_t* data, uint8_t len) {
+#elif defined(ARDUINO_ARCH_ESP32)
+  rx(const esp_now_recv_info_t* info, const uint8_t* data, int len) {
+    auto mac = info->src_addr;
+#endif
+    if (WifiEspNow.m_rxCb != nullptr) {
+      (*WifiEspNow.m_rxCb)(mac, data, static_cast<size_t>(len), WifiEspNow.m_rxArg);
+    }
+  }
+
+  static void
+#if defined(ARDUINO_ARCH_ESP8266)
+  tx(uint8_t* mac, uint8_t status) {
+    bool ok = status == 0;
+#elif defined(ARDUINO_ARCH_ESP32)
+  tx(const esp_now_send_info_t* info, esp_now_send_status_t status) {
+    bool ok = status == ESP_NOW_SEND_SUCCESS;
+#endif
+    WifiEspNow.m_txRes = ok ? WifiEspNowSendStatus::OK : WifiEspNowSendStatus::FAIL;
+  }
+};
+
 bool
 WifiEspNowClass::begin() {
   end();
-  m_ready =
-    WiFi.getMode() != 0 && esp_now_init() == 0 &&
+  m_ready = WiFi.getMode() != 0 && esp_now_init() == 0 &&
 #ifdef ARDUINO_ARCH_ESP8266
-    esp_now_set_self_role(ESP_NOW_ROLE_COMBO) == 0 &&
+            esp_now_set_self_role(ESP_NOW_ROLE_COMBO) == 0 &&
 #endif
-    esp_now_register_recv_cb(reinterpret_cast<esp_now_recv_cb_t>(WifiEspNowClass::rx)) == 0 &&
-    esp_now_register_send_cb(reinterpret_cast<esp_now_send_cb_t>(WifiEspNowClass::tx)) == 0;
+            esp_now_register_recv_cb(WifiEspNowInternal::rx) == 0 &&
+            esp_now_register_send_cb(WifiEspNowInternal::tx) == 0;
   return m_ready;
 }
 
@@ -80,14 +105,13 @@ WifiEspNowClass::hasPeer(const uint8_t mac[WIFIESPNOW_ALEN]) const {
 #endif
 }
 
-#if defined(ARDUINO_ARCH_ESP8266)
 bool
 WifiEspNowClass::addPeer(const uint8_t mac[WIFIESPNOW_ALEN], int channel,
-                         const uint8_t key[WIFIESPNOW_KEYLEN]) {
+                         const uint8_t key[WIFIESPNOW_KEYLEN], int netif) {
   if (!m_ready) {
     return false;
   }
-
+#if defined(ARDUINO_ARCH_ESP8266)
   if (this->hasPeer(mac)) {
     return esp_now_set_peer_channel(const_cast<u8*>(mac), static_cast<u8>(channel)) == 0 &&
            esp_now_set_peer_key(const_cast<u8*>(mac), const_cast<u8*>(key),
@@ -95,15 +119,7 @@ WifiEspNowClass::addPeer(const uint8_t mac[WIFIESPNOW_ALEN], int channel,
   }
   return esp_now_add_peer(const_cast<u8*>(mac), ESP_NOW_ROLE_SLAVE, static_cast<u8>(channel),
                           const_cast<u8*>(key), key == nullptr ? 0 : WIFIESPNOW_KEYLEN) == 0;
-}
 #elif defined(ARDUINO_ARCH_ESP32)
-bool
-WifiEspNowClass::addPeer(const uint8_t mac[WIFIESPNOW_ALEN], int channel,
-                         const uint8_t key[WIFIESPNOW_KEYLEN], int netif) {
-  if (!m_ready) {
-    return false;
-  }
-
   esp_now_peer_info_t pi{};
   static_assert(WIFIESPNOW_ALEN == sizeof(pi.peer_addr), "");
   std::copy_n(mac, WIFIESPNOW_ALEN, pi.peer_addr);
@@ -119,8 +135,8 @@ WifiEspNowClass::addPeer(const uint8_t mac[WIFIESPNOW_ALEN], int channel,
     return esp_now_mod_peer(&pi) == ESP_OK;
   }
   return esp_now_add_peer(&pi) == ESP_OK;
-}
 #endif
+}
 
 bool
 WifiEspNowClass::removePeer(const uint8_t mac[WIFIESPNOW_ALEN]) {
@@ -141,16 +157,4 @@ WifiEspNowClass::send(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, si
   WifiEspNow.m_txRes = WifiEspNowSendStatus::NONE;
   return esp_now_send(const_cast<uint8_t*>(mac), const_cast<uint8_t*>(buf),
                       static_cast<int>(count)) == 0;
-}
-
-void
-WifiEspNowClass::rx(const uint8_t* mac, const uint8_t* data, uint8_t len) {
-  if (WifiEspNow.m_rxCb != nullptr) {
-    (*WifiEspNow.m_rxCb)(mac, data, len, WifiEspNow.m_rxArg);
-  }
-}
-
-void
-WifiEspNowClass::tx(const uint8_t* mac, uint8_t status) {
-  WifiEspNow.m_txRes = status == 0 ? WifiEspNowSendStatus::OK : WifiEspNowSendStatus::FAIL;
 }
