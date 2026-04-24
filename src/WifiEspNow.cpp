@@ -21,7 +21,11 @@ WifiEspNowClass::begin() {
 #ifdef ARDUINO_ARCH_ESP8266
     esp_now_set_self_role(ESP_NOW_ROLE_COMBO) == 0 &&
 #endif
+#ifdef ARDUINO_ARCH_ESP8266
     esp_now_register_recv_cb(reinterpret_cast<esp_now_recv_cb_t>(WifiEspNowClass::rx)) == 0 &&
+#else
+    esp_now_register_recv_cb(WifiEspNowClass::rx) == 0 &&
+#endif
     esp_now_register_send_cb(reinterpret_cast<esp_now_send_cb_t>(WifiEspNowClass::tx)) == 0;
   return m_ready;
 }
@@ -143,12 +147,30 @@ WifiEspNowClass::send(const uint8_t mac[WIFIESPNOW_ALEN], const uint8_t* buf, si
                       static_cast<int>(count)) == 0;
 }
 
+#if defined(ARDUINO_ARCH_ESP32)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+void
+WifiEspNowClass::rx(const esp_now_recv_info_t* recv_info, const uint8_t* data, int len) {
+  if (WifiEspNow.m_rxCb != nullptr) {
+    (*WifiEspNow.m_rxCb)(recv_info->src_addr, data, static_cast<size_t>(len), WifiEspNow.m_rxArg);
+  }
+}
+#else
+void
+WifiEspNowClass::rx(const uint8_t* mac, const uint8_t* data, int len) {
+  if (WifiEspNow.m_rxCb != nullptr) {
+    (*WifiEspNow.m_rxCb)(mac, data, static_cast<size_t>(len), WifiEspNow.m_rxArg);
+  }
+}
+#endif
+#else
 void
 WifiEspNowClass::rx(const uint8_t* mac, const uint8_t* data, uint8_t len) {
   if (WifiEspNow.m_rxCb != nullptr) {
     (*WifiEspNow.m_rxCb)(mac, data, len, WifiEspNow.m_rxArg);
   }
 }
+#endif
 
 void
 WifiEspNowClass::tx(const uint8_t* mac, uint8_t status) {
