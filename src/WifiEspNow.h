@@ -11,6 +11,8 @@
 #include <ESP8266WiFi.h>
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
+#include <esp_idf_version.h>
+#include <esp_now.h>
 #endif
 
 #include <cstddef>
@@ -129,8 +131,15 @@ public:
   }
 
 private:
-  static void
-  rx(const uint8_t* mac, const uint8_t* data, uint8_t len);
+#if defined(ARDUINO_ARCH_ESP32)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+  static void rx(const esp_now_recv_info_t* recv_info, const uint8_t* data, int len);
+#else
+  static void rx(const uint8_t* mac, const uint8_t* data, int len);
+#endif
+#else
+  static void rx(const uint8_t* mac, const uint8_t* data, uint8_t len);
+#endif
 
   static void
   tx(const uint8_t* mac, uint8_t status);
